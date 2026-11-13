@@ -1,0 +1,12 @@
+const test=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs");
+const html=fs.readFileSync("index.html","utf8"),app=fs.readFileSync("app.js","utf8"),css=fs.readFileSync("styles.css","utf8");
+test("static app shell files exist",()=>["index.html","styles.css","app.js","config.js","sw.js","manifest.webmanifest"].forEach(f=>assert.ok(fs.statSync(f).size>0)));
+test("image upload accepts supported formats and size checks",()=>{assert.match(app,/image\\\/\(png\|jpeg\|webp\|gif\)/);assert.match(app,/8\*1024\*1024/)});
+test("image is inspected locally with canvas pixel sampling",()=>{assert.match(app,/getImageData/);assert.match(app,/function inspectImage/)});
+test("local story fallback supports English Hindi Odia",()=>{for(const l of ['lang==="hi"','lang==="or"'])assert.ok(app.includes(l));assert.match(app,/Evening arrived slowly/)});
+test("AI endpoint is configurable without embedding a secret",()=>{assert.match(fs.readFileSync("config.js","utf8"),/WORLDWHISPER_API_ENDPOINT/);assert.match(app,/FormData/)});
+test("read aloud uses Web Speech API",()=>{assert.match(app,/SpeechSynthesisUtterance/);assert.match(app,/speechSynthesis\.speak/)});
+test("PWA manifest and service worker are present",()=>{const m=JSON.parse(fs.readFileSync("manifest.webmanifest"));assert.equal(m.display,"standalone");assert.match(fs.readFileSync("sw.js","utf8"),/caches\.open/)});
+test("responsive and reduced-motion styling",()=>{assert.match(css,/@media\(max-width:650px\)/);assert.match(css,/prefers-reduced-motion/)});
+test("admin demo is labelled as static sample",()=>{assert.match(html,/STATIC DEMO CONTROL ROOM/);assert.match(html,/DEMO ONLY/)});
+test("controls for upload, generate, read and stop exist",()=>{for(const id of ["imageInput","generate","read","stop","copy"])assert.ok(html.includes(`id="${id}"`))});
